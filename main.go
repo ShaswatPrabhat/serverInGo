@@ -1,11 +1,18 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	"os"
 	"serverInGo/handlers"
 )
+
+type Configuration struct {
+	Port string `json:"port"'`
+}
 
 func validateUserAndValue(fl validator.FieldLevel) bool {
 	if len(fl.Field().String()) < 3 {
@@ -24,6 +31,20 @@ func setupRouter() *gin.Engine {
 	return r
 }
 
+func LoadConfig() (port string) {
+	file, _ := os.Open("conf.json")
+	defer file.Close()
+	decoder := json.NewDecoder(file)
+	configuration := Configuration{}
+	err := decoder.Decode(&configuration)
+	if err != nil {
+		fmt.Println("error in while opening config file", err, " defaulting to default port 8080")
+		port = "8080"
+		return
+	}
+	port = configuration.Port
+	return
+}
 func main() {
 	validatorEngine := binding.Validator.Engine()
 	v, ok := validatorEngine.(*validator.Validate)
@@ -31,5 +52,6 @@ func main() {
 		v.RegisterValidation("validateUserAndValue", validateUserAndValue)
 	}
 	r := setupRouter()
-	r.Run(":8080")
+
+	r.Run(":" + LoadConfig())
 }
