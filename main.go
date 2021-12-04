@@ -40,7 +40,7 @@ func setUserName(context *gin.Context) {
 
 	err := context.BindJSON(&userValue)
 	if err != nil {
-		context.String(http.StatusBadRequest, "Bad Request MF!!")
+		context.String(http.StatusBadRequest, err.Error())
 	} else {
 		db[userValue.User] = userValue.Value
 		context.JSON(http.StatusOK, gin.H{"user": userValue.User, "value": userValue.Value})
@@ -56,7 +56,9 @@ func setupRouter() *gin.Engine {
 }
 
 func main() {
-	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+	validatorEngine := binding.Validator.Engine()
+	v, ok := validatorEngine.(*validator.Validate)
+	if ok {
 		v.RegisterValidation("validateUserAndValue", validateUserAndValue)
 	}
 	r := setupRouter()
